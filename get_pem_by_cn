@@ -1,0 +1,13 @@
+#!/usr/bin/env python3
+
+from CertificateAuthorities import CertificateAuthorities
+import os
+
+roots = 'https://ccadb-public.secure.force.com/mozilla/IncludedCACertificateReportPEMCSV'
+intermediates = 'https://ccadb-public.secure.force.com/mozilla/PublicAllIntermediateCertsWithPEMCSV'
+
+ca_roots = CertificateAuthorities(roots, "root", os.path.dirname(os.path.abspath(__file__)))
+ca_roots.find_by_common_name('entrust')
+
+#ca_intermediates = CertificateAuthorities(intermediates, "intermediate", os.path.dirname(os.path.abspath(__file__)))
+#ca_intermediates.write_manifests()
