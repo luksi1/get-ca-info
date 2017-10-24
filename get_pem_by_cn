@@ -2,12 +2,17 @@
 
 from CertificateAuthorities import CertificateAuthorities
 import os
+import sys
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--type", help="choose whether we want an intermediate or root", choices=["root","intermediate"], dest='ca_type')
+parser.add_argument("--cn", help="common name to search", dest='cn')
+args = parser.parse_args()
 
 roots = 'https://ccadb-public.secure.force.com/mozilla/IncludedCACertificateReportPEMCSV'
 intermediates = 'https://ccadb-public.secure.force.com/mozilla/PublicAllIntermediateCertsWithPEMCSV'
 
-ca_roots = CertificateAuthorities(roots, "root", os.path.dirname(os.path.abspath(__file__)))
-ca_roots.find_by_common_name('entrust')
+ca = CertificateAuthorities(args.ca_type, os.path.dirname(os.path.abspath(__file__)))
+ca.find_by_common_name(args.cn)
 
-#ca_intermediates = CertificateAuthorities(intermediates, "intermediate", os.path.dirname(os.path.abspath(__file__)))
-#ca_intermediates.write_manifests()
