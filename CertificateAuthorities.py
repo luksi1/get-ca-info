@@ -2,6 +2,7 @@
 
 import urllib.request
 from collections import defaultdict
+from colorama import Fore, Back, Style, init
 import csv
 import io
 import re
@@ -9,6 +10,7 @@ import re
 class CertificateAuthorities():
 
   def __init__(self, ca_type, relative_path ):
+    init()
     self.roots_url = 'https://ccadb-public.secure.force.com/mozilla/IncludedCACertificateReportPEMCSV'
     self.intermediates_url = 'https://ccadb-public.secure.force.com/mozilla/PublicAllIntermediateCertsWithPEMCSV'
 
@@ -18,34 +20,35 @@ class CertificateAuthorities():
     self.relative_path = relative_path
 
     self.root_columns = [
-      "owner",
-      "certificate_issuer_organization",
-      "certificate_issuer_organizational_unit",
-      "common_name_or_certificate_name",
-      "certificate_serial_number", 
-      "sha_256_fingerprint", 
-      "certificate_id", "valid_from_gmt", 
-      "valid_to_gmt", 
-      "public_key_algorithm", 
-      "signature_hash_algorithm", 
-      "trust_bits", 
-      "ev_policy_oid", 
-      "approval_bug", 
-      "nss_release_when_first_included", 
-      "firefox_release_when_first_included", 
-      "test_website_valid", 
-      "mozilla_applied_constraints", 
-      "company_website", 
-      "geographic_focus", 
-      "certificate_policy", 
-      "certification_practice_statement", 
-      "standard_audit", 
-      "br_audit", 
-      "ev_audit", 
-      "auditor", 
-      "standard_audit_type", 
-      "standard_audit_statement_dt", 
-      "pem_info"
+      "owner", # Owner
+      "certificate_issuer_organization", # Certificate Issuer Organization
+      "certificate_issuer_organizational_unit", # Certificate Issuer Organizational Unit
+      "common_name_or_certificate_name", # Common Name or Certificate Name
+      "certificate_serial_number", # Certificate Serial Number
+      "sha_256_fingerprint", # SHA-256 Fingerprint
+      "certificate_id", # Certificate ID
+      "valid_from_gmt", # Valid From [GMT]
+      "valid_to_gmt", # Valid To [GMT]
+      "public_key_algorithm", # Public Key Algorithm
+      "signature_hash_algorithm", # Signature Hash Algorithm
+      "trust_bits", # Trust Bits
+      "ev_policy_oid", # EV Policy OID(s)
+      "approval_bug", # Approval Bug 
+      "nss_release_when_first_included", # NSS Release When First Included
+      "firefox_release_when_first_included", # Firefox Release When First Included
+      "test_website_valid", # Test Website - Valid
+      "mozilla_applied_constraints", # Mozilla Applied Constraints
+      "company_website", # Company Website
+      "geographic_focus", # Geographic Focus
+      "certificate_policy", # Certificate Policy (CP)
+      "certification_practice_statement", # Certification Practice Statement (CPS)
+      "standard_audit", # Standard Audit
+      "br_audit", # BR Audit
+      "ev_audit", # EV Audit
+      "auditor", # Auditor
+      "standard_audit_type", # Standard Audit Type
+      "standard_audit_statement_dt", # Standard Audit Statement Dt
+      "pem_info" # PEM Info
     ] 
 
     self.intermediate_columns = [
@@ -107,7 +110,7 @@ class CertificateAuthorities():
     return result
 
 
-  def find_by_common_name(self, common_name):
+  def create_pkcs12_by_common_name(self, common_name):
 
     result = self.__get_result_dictionary()
 
@@ -138,26 +141,41 @@ class CertificateAuthorities():
       fh.write("\n")
       fh.close()
 
+  def find_by_common_name(self, common_name):
 
-  def find_by_issuer(self, issuer):
+    result = self.__get_result_dictionary()
 
-    for idx, cn in enumerate(result['certificate_issuer_common_name']):
-      regex = '^' + issuer + '$'
+    for idx, cn in enumerate(result[self.cn_field]):
+      regex = '^.*' + common_name + '.*$'
 
       match = re.search(regex, cn, re.IGNORECASE)
 
       if not match:
         continue
 
-      # remove all hyphens from the common names
-      resource_type = hyphen.sub("", cn)
+      print(Fore.RED + "======================================================")
 
-      # replace all white continuous space with a underscore
-      resource_type = space.sub("_", resource_type)
-      resource_type = slash.sub("_", resource_type)
-      resource_type = non_letter_number.sub("", resource_type).lower()
+      for idx2, column in enumerate(self.columns):
+        column_name = column
+        
+        print(Fore.GREEN + column_name + ":")
+        print(Style.RESET_ALL + "  " + result[column_name][idx2])
 
-      fh = open(resource_type + 'p12', 'w')
-      fh.write(result["pem_info"][idx])
-      fh.close()
+  def find_by_issuer(self, issuer):
+
+    for idx, cn in enumerate(result['certificate_issuer_common_name']):
+
+      regex = '^' + issuer + '$'
+      match = re.search(regex, cn, re.IGNORECASE)
+
+      if not match:
+        continue
+
+      print(Fore.RED + "======================================================")
+
+      for idx2, column in enumerate(self.columns):
+        column_name = column
+        
+        print(Fore.GREEN + column_name + ":")
+        print(Style.RESET_ALL + "  " + result[column_name][idx2])
 
